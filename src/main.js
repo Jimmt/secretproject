@@ -16,7 +16,8 @@ const config = {
         default: 'arcade',
         arcade: {
             debug: true,
-            gravity: 0
+            gravity: 0,
+            fixedStep: false
         }
     },
     render: {
@@ -24,7 +25,7 @@ const config = {
     },
     scale: {
         mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     scene: [
         Boot,

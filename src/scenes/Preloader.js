@@ -42,6 +42,10 @@ export class Preloader extends Scene
             frameWidth: 54,
             frameHeight: 54,
         });
+
+        this.load.image('Interiors_free_32x32', 'Interiors_free_32x32.png')
+        this.load.image('Room_Builder_free_32x32', 'Room_Builder_free_32x32.png')
+        this.load.tilemapTiledJSON('map', 'map.json')
     }
 
     create ()

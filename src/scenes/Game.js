@@ -1,6 +1,5 @@
 import { Math, Scene } from 'phaser';
 
-
 export class Game extends Scene
 {
   constructor ()
@@ -10,9 +9,16 @@ export class Game extends Scene
 
   create ()
   {
-    this.cameras.main.setBackgroundColor(0x00ff00);
+    this.cameras.main.setBackgroundColor(0xffffff);
+    this.cameras.main.setZoom(3)
+    this.map = this.make.tilemap({ key: 'map'})
+    const map = this.map
+    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels)
 
-    this.add.image(512, 384, 'background').setAlpha(0.5)
+    this.books = []
+    this.bookHeight = 54
+
+    this.configureMap()
 
     this.input.once('pointerdown', () => {
       // this.scene.start('GameOver');
@@ -23,8 +29,12 @@ export class Game extends Scene
     this.player = player
     player.body.setSize(20, 15)
     player.body.setOffset(6, 17)
-    player.setScale(4);
+    player.setScale(1);
+    player.setDepth(2);
     player.body.setCollideWorldBounds(true)
+    this.physics.add.collider(player, this.mapColliders);
+    this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels)
+    this.cameras.main.startFollow(this.player)
 
     // Create an animation
     this.anims.create({
@@ -40,17 +50,43 @@ export class Game extends Scene
       repeat: -1
     });
 
-    this.books = [new Book(this, 100, 100, 10), new Book(this, 290, 290, 8), new Book(this, 300, 300, 9)]
-    this.bookHeight = 54
     this.handleSpacebar()
     // TODO(austin): have customers come from the right
+  }
+
+  configureMap() {
+    const map = this.map
+    const interiorTileset = map.addTilesetImage('Interiors_free_32x32')
+    const roomTileset = map.addTilesetImage('Room_Builder_free_32x32')
+    this.groundLayer = map.createLayer("ground", roomTileset)
+    this.shelvesLayer = map.createLayer("bookshelves", interiorTileset)
+
+    this.mapColliders = this.physics.add.staticGroup();
+    const collisionLayer = map.getObjectLayer("collision")
+    collisionLayer.objects.forEach((object) => {
+      const collider = this.mapColliders.create(object.x + object.width / 2, object.y + object.height / 2, "", "", /* isVisible= */ false)
+      collider.body.setSize(object.width, object.height)
+    })
+
+    this.bookSpawnRects = []
+    const bookSpawnLayer = map.getObjectLayer("book_spawn")
+    bookSpawnLayer.objects.forEach((object) => {
+      const rect = new Phaser.Geom.Rectangle(object.x, object.y, object.width, object.height)
+      this.bookSpawnRects.push(rect)
+    })
+
+    // const bookPickupLayer = 
+
+    for (let i = 0; i < 100; i++)
+    this.spawnBook()
   }
 
   handleSpacebar() {
     const player = this.player
     const spaceKey = this.input.keyboard.addKey('SPACE');
     spaceKey.on('down', () => {
-      const grabRadius = this.bookHeight / 2
+      if (player.book) { player.detachBook(); return; }
+
       let minDist = 999999999
       let minDistBook = null
       this.books.forEach(book => {
@@ -58,14 +94,35 @@ export class Game extends Scene
         // Sprite x/y coordinates for book are centered for some reason.
         const bookRect = new Phaser.Geom.Rectangle(book.getTopLeft().x, book.getTopLeft().y, book.width, book.height)
         const dist = Math.Distance.Between(bookRect.centerX, bookRect.centerY, playerRect.centerX, playerRect.centerY)
+        // console.log(dist < minDist, Phaser.Geom.Intersects.RectangleToRectangle(playerRect, bookRect));
         if (dist < minDist && Phaser.Geom.Intersects.RectangleToRectangle(playerRect, bookRect)) { 
           minDist = dist
           minDistBook = book
         }
       })
-      if (minDistBook) player.attach(minDistBook)
+      if (minDistBook) player.attachBook(minDistBook)
     });
+  }
 
+  spawnBook() {
+    const cumulativeAreas = []
+    let areaSum = 0
+    this.bookSpawnRects.forEach((rect) => {
+      areaSum += rect.width * rect.height
+      cumulativeAreas.push(areaSum)
+    })
+    const areaProbs = []
+    const areaChooser = Phaser.Math.Between(0, areaSum - 1)
+    let chosenAreaIndex;
+    cumulativeAreas.some((cumulativeArea, index) => {
+      if (areaChooser < cumulativeArea) { chosenAreaIndex = index; return true; }
+      return false;
+    })
+    const chosenRect = this.bookSpawnRects[chosenAreaIndex]
+    const bookX = chosenRect.x + Phaser.Math.Between(0, chosenRect.width)
+    const bookY = chosenRect.y + Phaser.Math.Between(0, chosenRect.height)
+    console.log(this)
+    this.books.push(new Book(this, bookX, bookY, 10))
   }
 
   update ()
@@ -115,15 +172,16 @@ class Player extends Phaser.GameObjects.Sprite {
     this.setFrame(frame)
   }
 
-  attach(book) {
-    this.book = book
-  }
+  attachBook(book) { this.book = book }
+
+  detachBook() { this.book = null }
 
   update() {
     if (!this.book) return
     let xDir = this.flipX == 1 ? -1 : 1
-    this.book.x = this.x + xDir * 48
-    this.book.y = this.y + 45
+    this.book.x = this.x + xDir * 12
+    console.log(this.book.x)
+    this.book.y = this.y + 11
   }
 }
 
@@ -132,5 +190,6 @@ class Book extends Phaser.GameObjects.Sprite {
     super(scene, x, y, "books");
     scene.add.existing(this);
     this.setFrame(frame)
+    this.setScale(0.25)
   }
 }

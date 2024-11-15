@@ -3,16 +3,50 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "public/assets/map.tmx",
     "expandedProjectPaths": [
+        "dist",
+        "."
     ],
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
+        "Interiors_free_32x32.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "Room_Builder_free_32x32.tsx": {
+            "scaleInDock": 1
+        },
+        "public/assets/map.tmx": {
+            "scale": 2,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 270.25,
+                "y": 311.25
+            }
+        },
+        "public/assets/map.tmx#Interiors_free_32x32": {
+            "scaleInDock": 2
+        },
+        "public/assets/map.tmx#Room_Builder_free_32x32": {
+            "scaleInDock": 2
+        }
     },
+    "last.exportedFilePath": "C:/Users/austi/repos/secretproject/public/assets",
     "last.imagePath": "C:/Users/austi/Downloads/Modern_Interiors_Free_v2.2/Modern tiles_Free/Interiors_free/32x32",
+    "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
+    "map.lastUsedFormat": "tmx",
     "openFiles": [
+        "public/assets/map.tmx"
     ],
     "project": "map.tiled-project",
+    "property.type": "int",
     "recentFiles": [
+        "public/assets/map.tmx"
     ],
+    "tileset.embedInMap": true,
     "tileset.lastUsedFormat": "tsx"
 }
