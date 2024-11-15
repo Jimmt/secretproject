@@ -10,7 +10,7 @@ export class Game extends Scene
   create ()
   {
     this.cameras.main.setBackgroundColor(0xffffff);
-    this.cameras.main.setZoom(3)
+    this.cameras.main.setZoom(4)
     this.map = this.make.tilemap({ key: 'map'})
     const map = this.map
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels)
@@ -75,10 +75,12 @@ export class Game extends Scene
       this.bookSpawnRects.push(rect)
     })
 
+    // TODO austin: drop off books at the pickup layer for some points
+    // need a progress bar ui or something
     // const bookPickupLayer = 
 
-    for (let i = 0; i < 100; i++)
-    this.spawnBook()
+    for (let i = 0; i < 20; i++)
+      this.spawnBook()
   }
 
   handleSpacebar() {
@@ -112,17 +114,16 @@ export class Game extends Scene
       cumulativeAreas.push(areaSum)
     })
     const areaProbs = []
-    const areaChooser = Phaser.Math.Between(0, areaSum - 1)
+    const areaChooser = Math.Between(0, areaSum - 1)
     let chosenAreaIndex;
     cumulativeAreas.some((cumulativeArea, index) => {
       if (areaChooser < cumulativeArea) { chosenAreaIndex = index; return true; }
       return false;
     })
     const chosenRect = this.bookSpawnRects[chosenAreaIndex]
-    const bookX = chosenRect.x + Phaser.Math.Between(0, chosenRect.width)
-    const bookY = chosenRect.y + Phaser.Math.Between(0, chosenRect.height)
-    console.log(this)
-    this.books.push(new Book(this, bookX, bookY, 10))
+    const bookX = chosenRect.x + Math.Between(0, chosenRect.width)
+    const bookY = chosenRect.y + Math.Between(0, chosenRect.height)
+    this.books.push(new Book(this, bookX, bookY, Math.Between(21, 41)))
   }
 
   update ()
@@ -146,7 +147,7 @@ export class Game extends Scene
       player.body.setVelocityX(0)
     }
     
-    let verticalSpeed = 160
+    let verticalSpeed = 140
     if (cursors.up.isDown || this.input.keyboard.addKey('W').isDown) {
       player.body.setVelocityY(-verticalSpeed)
     } else if (cursors.down.isDown || this.input.keyboard.addKey('S').isDown) {
@@ -172,15 +173,14 @@ class Player extends Phaser.GameObjects.Sprite {
     this.setFrame(frame)
   }
 
-  attachBook(book) { this.book = book }
+  attachBook(book) { this.book = book; book.setOnGround(false); }
 
-  detachBook() { this.book = null }
+  detachBook() { this.book.setOnGround(true); this.book = null; }
 
   update() {
     if (!this.book) return
     let xDir = this.flipX == 1 ? -1 : 1
     this.book.x = this.x + xDir * 12
-    console.log(this.book.x)
     this.book.y = this.y + 11
   }
 }
@@ -192,4 +192,6 @@ class Book extends Phaser.GameObjects.Sprite {
     this.setFrame(frame)
     this.setScale(0.25)
   }
+
+  setOnGround(onGround) { this.setAngle(onGround ? 0 : -45) }
 }
