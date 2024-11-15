@@ -38,6 +38,14 @@ export class Preloader extends Scene
             frameWidth: 32,
             frameHeight: 32,
         });
+        this.load.spritesheet('fox', 'fox_sheet.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
+        this.load.spritesheet('cat2', 'cat2_sheet.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
         this.load.spritesheet('books', 'book-sheet.png', {
             frameWidth: 54,
             frameHeight: 54,

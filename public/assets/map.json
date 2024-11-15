@@ -212,18 +212,18 @@
         }, 
         {
          "draworder":"topdown",
-         "id":7,
-         "name":"book_pickup",
+         "id":8,
+         "name":"customer_spawn",
          "objects":[
                 {
-                 "height":215,
-                 "id":24,
+                 "height":219,
+                 "id":26,
                  "name":"",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":21.6666666666667,
-                 "x":801.333333333333,
+                 "width":16.3333333333333,
+                 "x":974,
                  "y":283
                 }],
          "opacity":1,
@@ -232,8 +232,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":8,
- "nextobjectid":25,
+ "nextlayerid":9,
+ "nextobjectid":27,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.0",
