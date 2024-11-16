@@ -67,7 +67,7 @@ export class Game extends Scene
     const roomTileset = map.addTilesetImage('Room_Builder_free_32x32')
     this.groundLayer = map.createLayer("ground", roomTileset)
 
-    const interiorLayers = ["bookshelves", "plants", "plants2", "overlapping", "frontlight", "walls"]
+    const interiorLayers = ["bookshelves", "plants", "plants2", "overlapping", "frontlight"]
     const interiorLayersMap = {}
     interiorLayers.forEach((layerName) => {
       interiorLayersMap[layerName] = map.createLayer(layerName, interiorTileset)
@@ -131,12 +131,13 @@ export class Game extends Scene
     }
     let availableYs = [...spawnYs]
     const customerTypes = ["fox", "cat2", "raccoon"]
+    const requestsDistrib = [1, 1, 1, 2, 2, 2, 3]
     for (let i = 0; i < customerCount; i++) {
       const randomIndex = Math.Between(0, availableYs.length - 1);
       const assignedY = availableYs[randomIndex] * o.height / customerCount;
       availableYs.splice(randomIndex, 1);
 
-      const numRequests = Math.Between(1, 2)
+      const numRequests = requestsDistrib[Math.Between(0, requestsDistrib.length - 1)]
       const requests = []
       // copy
       const booksChecklist = [...this.books]
@@ -209,7 +210,7 @@ export class Game extends Scene
     let player = this.player
     let cursors = this.cursors
     
-    let horizSpeed = 260
+    let horizSpeed = 100
     if (cursors.left.isDown || this.input.keyboard.addKey('A').isDown) {
       player.body.setVelocityX(-horizSpeed)
       player.flipX = 1
@@ -220,7 +221,7 @@ export class Game extends Scene
       player.body.setVelocityX(0)
     }
     
-    let verticalSpeed = 240
+    let verticalSpeed = 80
     if (cursors.up.isDown || this.input.keyboard.addKey('W').isDown) {
       player.body.setVelocityY(-verticalSpeed)
     } else if (cursors.down.isDown || this.input.keyboard.addKey('S').isDown) {
