@@ -1,5 +1,11 @@
 import { Math, Scene } from 'phaser';
 
+class DepthManager {
+  static player() { return 2; }
+  static mapOverlap() { return 3; }
+  static ui() { return 4; }
+}
+
 export class Game extends Scene
 {
   constructor ()
@@ -10,13 +16,14 @@ export class Game extends Scene
   create ()
   {
     this.cameras.main.setBackgroundColor(0xffffff);
-    this.cameras.main.setZoom(4)
+    this.cameras.main.setZoom(1)
     this.map = this.make.tilemap({ key: 'map'})
     const map = this.map
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels)
 
     this.books = []
     this.bookSize = 54
+    this.gameOver = false
 
     this.configureMap()
 
@@ -30,7 +37,7 @@ export class Game extends Scene
     player.body.setSize(20, 15)
     player.body.setOffset(6, 17)
     player.setScale(1);
-    player.setDepth(2);
+    player.setDepth(DepthManager.player());
     player.body.setCollideWorldBounds(true)
     this.physics.add.collider(player, this.mapColliders);
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels)
@@ -58,7 +65,14 @@ export class Game extends Scene
     const interiorTileset = map.addTilesetImage('Interiors_free_32x32')
     const roomTileset = map.addTilesetImage('Room_Builder_free_32x32')
     this.groundLayer = map.createLayer("ground", roomTileset)
-    this.shelvesLayer = map.createLayer("bookshelves", interiorTileset)
+
+    const interiorLayers = ["bookshelves", "plants", "plants2", "overlapping", "frontlight", "walls"]
+    const interiorLayersMap = {}
+    interiorLayers.forEach((layerName) => {
+      interiorLayersMap[layerName] = map.createLayer(layerName, interiorTileset)
+    })
+    interiorLayersMap["plants"].setDepth(DepthManager.mapOverlap())
+    interiorLayersMap["plants2"].setDepth(DepthManager.mapOverlap())
 
     this.mapColliders = this.physics.add.staticGroup();
     const collisionLayer = map.getObjectLayer("collision")
@@ -91,8 +105,7 @@ export class Game extends Scene
       this.books.forEach(book => {
         if (book.frozen) return
         const playerRect = new Phaser.Geom.Rectangle(player.body.x, player.body.y, player.body.width, player.body.height)
-        // Sprite x/y coordinates for book are centered for some reason.
-        const bookRect = new Phaser.Geom.Rectangle(book.getTopLeft().x, book.getTopLeft().y, book.width, book.height)
+        const bookRect = new Phaser.Geom.Rectangle(book.getTopLeft().x, book.getTopLeft().y, book.displayWidth, book.displayHeight)
         const dist = Math.Distance.Between(bookRect.centerX, bookRect.centerY, playerRect.centerX, playerRect.centerY)
         // console.log(dist < minDist, Phaser.Geom.Intersects.RectangleToRectangle(playerRect, bookRect));
         if (dist < minDist && Phaser.Geom.Intersects.RectangleToRectangle(playerRect, bookRect)) { 
@@ -107,23 +120,28 @@ export class Game extends Scene
   configureCustomers() {
     const customerFrontLayer = this.map.getObjectLayer("customer_spawn")
     const o = customerFrontLayer.objects[0]
-    const customerCount = 1
+    const customerCount = 3
     this.customers = []
-    const spawnYs = []
+    let spawnYs = []
     for (let i = 0; i < customerCount; i++) {
       spawnYs.push(i)
     }
+    let availableYs = [...spawnYs]
+    const customerTypes = ["fox", "cat2", "raccoon"]
     for (let i = 0; i < customerCount; i++) {
-      const spawnYIndex = spawnYs[Math.Between(0, spawnYs.length - 1)]
-      const spawnYOffset = o.height / customerCount * spawnYIndex
-      spawnYs.splice(spawnYIndex, 1)
+      const randomIndex = Math.Between(0, availableYs.length - 1);
+      const assignedY = availableYs[randomIndex] * o.height / customerCount;
+      availableYs.splice(randomIndex, 1);
+
       const requests = [0]
-      const customer = new Customer(this, o.x, o.y + spawnYOffset + Math.Between(-3, 3),  "fox", requests)
+      const type = customerTypes[Math.Between(0, customerTypes.length - 1)]
+      const isFinalCustomer = i == customerCount - 1
+      const customer = new Customer(this, o.x, o.y + assignedY + Math.Between(-2, 2), type, isFinalCustomer ? [] : requests, isFinalCustomer)
       this.customers.push(customer);
-      this.add.rectangle(customer.x - 10, customer.y + 5.5, customer.width, customer.height, 0xff0000, 0.5)
+      // this.add.rectangle(customer.x - 10, customer.y + 5.5, customer.width, customer.height, 0xff0000, 0.5)
     }
     this.customers[0].animateEntry()
-    this.debugBookRect = this.add.rectangle(0, 0, 100, 100, 0xff0000, 0.5)
+    // this.debugBookRect = this.add.rectangle(0, 0, 100, 100, 0xff0000, 0.5)
   }
 
   spawnBook() {
@@ -153,18 +171,35 @@ export class Game extends Scene
     this.player.update()
 
     this.customers.forEach((c) => {
+      c.update()
       this.books.forEach((book) => {
+        if (book.frozen) return
         if (!book.onGround()) {
-        this.debugBookRect.setPosition(book.x, book.y)
-        this.debugBookRect.setSize(book.displayWidth, book.displayHeight) 
+        // this.debugBookRect.setPosition(book.x, book.y)
+        // this.debugBookRect.setSize(book.displayWidth, book.displayHeight) 
       }
         const bookRect = new Phaser.Geom.Rectangle(book.x, book.y, book.displayWidth, book.displayHeight)
         const pickupRect = new Phaser.Geom.Rectangle(c.x - 21, c.y, c.width, c.height)
         if (Phaser.Geom.Intersects.RectangleToRectangle(bookRect, pickupRect) && book.onGround() && c.requests.includes(book.type)) {
-          c.giveBook(book)
+          const customerComplete = c.giveBook(book)
+          if (customerComplete) { 
+            const nextCustomer = this.customers.find((cust) => !cust.complete)
+            if (nextCustomer) {
+              nextCustomer.animateEntry()
+            } else {
+              endGame()
+            }
+          }
         }
       })
     })
+  }
+
+  endGame() {
+    if (this.gameOver) return
+    this.gameOver = true
+
+    
   }
 
   handleMovement() {
@@ -200,19 +235,30 @@ export class Game extends Scene
 }
 
 class Customer extends Phaser.GameObjects.Sprite {
-  constructor(scene, x, y, tex, requests) {
+  constructor(scene, x, y, tex, requests, isFinalCustomer) {
     super(scene, x, y, tex);
     scene.add.existing(this);
     this.setFrame(0)
     this.flipX = -1
     this.requests = requests
+    this.complete = false
  
-    this.bookUiSprites = requests.map((request) => {
-      const bookUiSprite = new Book(scene, 0, 0, request);
-      bookUiSprite.setFrame(request)
-      return bookUiSprite
-    })
-    this.alignBookUiPositions()
+    this.bookUiSprites = []
+    if (isFinalCustomer) {
+
+    } else {
+      this.bubble = scene.add.graphics(0, 0)
+      this.bubble.setDepth(DepthManager.ui());
+      this.bubble.setAlpha(0)
+      this.bookUiSprites = requests.map((request) => {
+        const bookUiSprite = new Book(scene, 0, 0, request);
+        bookUiSprite.setDepth(DepthManager.ui());
+        bookUiSprite.setFrame(request)
+        bookUiSprite.setAlpha(0)
+        return bookUiSprite
+      })
+      this.alignBookUiPositions()
+    }
 
     let idleFrameStart = 0;
     let idleFrameEnd = 0;
@@ -220,12 +266,27 @@ class Customer extends Phaser.GameObjects.Sprite {
     let runFrameEnd = 0;
     let celebrateFrameStart = 0;
     let celebrateFrameEnd = 0;
+    let celebrateRepeatCount = 2;
     if (tex === "fox") {
       idleFrameEnd = 4
       runFrameStart = 28
       runFrameEnd = 35
       celebrateFrameStart = 42
       celebrateFrameEnd = 52
+    } else if (tex === "cat2") {
+      idleFrameEnd = 3
+      runFrameStart = 32
+      runFrameEnd = 39
+      celebrateFrameStart = 56
+      celebrateFrameEnd = 61
+      celebrateRepeatCount = 1
+    } else if (tex == "raccoon") {
+      idleFrameEnd = 7
+      runFrameStart = 8
+      runFrameEnd = 15
+      celebrateFrameStart = 16
+      celebrateFrameEnd = 19
+      celebrateRepeatCount = 1
     }
 
     this.anims.create({
@@ -244,15 +305,31 @@ class Customer extends Phaser.GameObjects.Sprite {
       key: 'celebrate',
       frames: this.anims.generateFrameNumbers(tex, { start: celebrateFrameStart, end: celebrateFrameEnd }),
       frameRate: 10,
-      repeat: 2
+      repeat: celebrateRepeatCount
     });
+  }
+
+  update() {
+    if (this.bookUiSprites.length == 0) return
+    const firstBookUi = this.bookUiSprites[0]
+    this.bubble.setPosition(firstBookUi.getTopLeft().x, firstBookUi.getTopLeft().y)
   }
 
   alignBookUiPositions() {
     this.bookUiSprites.forEach((sprite, index) => {
-      const bookUiBaselineX = this.x - sprite.displayWidth * this.bookUiSprites.length / 2
-      sprite.setPosition(bookUiBaselineX + index * sprite.displayHeight, this.y - sprite.displayHeight / 2)
+      const bookUiTopLeftX = this.x - sprite.displayWidth * this.bookUiSprites.length / 2
+      const topLeftX = bookUiTopLeftX + index * sprite.displayWidth - 2
+      sprite.setPosition(topLeftX + sprite.displayWidth / 2, this.y - sprite.displayHeight / 2)
     })
+
+    if (this.bookUiSprites.length == 0) { this.bubble.clear(); return }
+    const firstBookUi = this.bookUiSprites[0]
+    const bubble = this.bubble
+    bubble.clear()
+    bubble.fillStyle(0xffffff, 1);
+    bubble.lineStyle(1, 0x565656, 1)
+    bubble.fillRoundedRect(0, 0, this.bookUiSprites.length * firstBookUi.displayWidth, firstBookUi.displayHeight, 2)
+    bubble.strokeRoundedRect(0, 0, this.bookUiSprites.length * firstBookUi.displayWidth, firstBookUi.displayHeight, 2)
   }
 
   giveBook(book) { 
@@ -267,7 +344,10 @@ class Customer extends Phaser.GameObjects.Sprite {
     this.alignBookUiPositions()
     if (requests.length == 0) {
       this.play('celebrate', true).chain('idle')
+      this.complete = true
+      return true
     }
+    return false
   }
 
   animateEntry() {
@@ -280,6 +360,9 @@ class Customer extends Phaser.GameObjects.Sprite {
       },
       onComplete :() => {
         this.play('idle', true)
+        if (this.isFinalCustomer) return
+        this.bookUiSprites.forEach((sprite) => { sprite.setAlpha(1) })
+        this.bubble.setAlpha(1)
       }
     })
   }

@@ -46,6 +46,10 @@ export class Preloader extends Scene
             frameWidth: 32,
             frameHeight: 32,
         });
+        this.load.spritesheet('raccoon', 'Raccoon_Sprite_Sheet.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
         this.load.spritesheet('books', 'book-sheet.png', {
             frameWidth: 54,
             frameHeight: 54,
