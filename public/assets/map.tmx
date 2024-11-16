@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="14" nextobjectid="68">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="15" nextobjectid="73">
  <editorsettings>
   <export target="map.json" format="json"/>
  </editorsettings>
@@ -42,8 +42,8 @@
   <object id="45" x="801.667" y="11.3333" width="95.3333" height="66"/>
   <object id="46" x="893.333" y="135.333"/>
   <object id="47" x="882.333" y="76" width="43.6667" height="84"/>
-  <object id="48" x="672" y="280.5" width="152.5" height="36"/>
-  <object id="49" x="800" y="314.5" width="26" height="195.5"/>
+  <object id="48" x="672" y="280.5" width="31.625" height="36"/>
+  <object id="49" x="800" y="480.682" width="26" height="29.3182"/>
   <object id="51" x="679.5" y="479" width="122" height="31.5"/>
   <object id="52" x="741.5" y="597.5" width="58" height="29.5"/>
   <object id="53" x="514" y="561.5" width="147.5" height="62.5"/>
@@ -60,6 +60,8 @@
   <object id="65" x="13.5" y="130" width="34.5" height="106"/>
   <object id="66" x="672" y="257.273" width="30" height="40.7273"/>
   <object id="67" x="481" y="576.667" width="28.3333" height="50.3333"/>
+  <object id="68" x="704.25" y="280.25" width="121.625" height="23.875"/>
+  <object id="69" x="806.364" y="280.909" width="19.4545" height="198.909"/>
  </objectgroup>
  <layer id="1" name="bookshelves" width="30" height="20">
   <data encoding="csv">
@@ -217,5 +219,8 @@
  </objectgroup>
  <objectgroup id="8" name="customer_spawn" locked="1" offsetx="0.5" offsety="0">
   <object id="28" x="970.5" y="303.5" width="14.75" height="180"/>
+ </objectgroup>
+ <objectgroup id="14" name="cake_anchor">
+  <object id="72" x="807.455" y="378" width="9.45455" height="8.72727"/>
  </objectgroup>
 </map>

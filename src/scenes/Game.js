@@ -1,9 +1,12 @@
 import { Math, Scene } from 'phaser';
 
 class DepthManager {
-  static player() { return 2; }
-  static mapOverlap() { return 3; }
-  static ui() { return 4; }
+  static cake() { return 2; }
+  static player() { return 3; }
+  static customer() { return 4; }
+  static mapOverlap() { return 5; }
+  static ui() { return 6; }
+  static uiText() { return 7; }
 }
 
 export class Game extends Scene
@@ -16,14 +19,13 @@ export class Game extends Scene
   create ()
   {
     this.cameras.main.setBackgroundColor(0xffffff);
-    this.cameras.main.setZoom(1)
+    this.cameras.main.setZoom(3.5)
     this.map = this.make.tilemap({ key: 'map'})
     const map = this.map
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels)
 
     this.books = []
     this.bookSize = 54
-    this.gameOver = false
 
     this.configureMap()
 
@@ -32,11 +34,10 @@ export class Game extends Scene
     });
     this.cursors = this.input.keyboard.createCursorKeys();
 
-    let player = new Player(this, 800, 300, 'cat');
+    let player = new Player(this, 750, 370, 'cat');
     this.player = player
     player.body.setSize(20, 15)
     player.body.setOffset(6, 17)
-    player.setScale(1);
     player.setDepth(DepthManager.player());
     player.body.setCollideWorldBounds(true)
     this.physics.add.collider(player, this.mapColliders);
@@ -88,10 +89,13 @@ export class Game extends Scene
       this.bookSpawnRects.push(rect)
     })
 
-    // need a progress bar ui or something
+    const cakeAnchorLayer = map.getObjectLayer("cake_anchor")
+    this.cakeAnchor = cakeAnchorLayer.objects[0]
 
-    for (let i = 0; i < 100; i++)
-      this.spawnBook()
+    for (let i = 0; i < 50; i++) {
+      const type = Math.Between(0,20)
+      this.spawnBook(type)
+    }
   }
 
   handleSpacebar() {
@@ -107,7 +111,6 @@ export class Game extends Scene
         const playerRect = new Phaser.Geom.Rectangle(player.body.x, player.body.y, player.body.width, player.body.height)
         const bookRect = new Phaser.Geom.Rectangle(book.getTopLeft().x, book.getTopLeft().y, book.displayWidth, book.displayHeight)
         const dist = Math.Distance.Between(bookRect.centerX, bookRect.centerY, playerRect.centerX, playerRect.centerY)
-        // console.log(dist < minDist, Phaser.Geom.Intersects.RectangleToRectangle(playerRect, bookRect));
         if (dist < minDist && Phaser.Geom.Intersects.RectangleToRectangle(playerRect, bookRect)) { 
           minDist = dist
           minDistBook = book
@@ -120,7 +123,7 @@ export class Game extends Scene
   configureCustomers() {
     const customerFrontLayer = this.map.getObjectLayer("customer_spawn")
     const o = customerFrontLayer.objects[0]
-    const customerCount = 3
+    const customerCount = 6
     this.customers = []
     let spawnYs = []
     for (let i = 0; i < customerCount; i++) {
@@ -133,18 +136,26 @@ export class Game extends Scene
       const assignedY = availableYs[randomIndex] * o.height / customerCount;
       availableYs.splice(randomIndex, 1);
 
-      const requests = [0]
+      const numRequests = Math.Between(1, 2)
+      const requests = []
+      // copy
+      const booksChecklist = [...this.books]
+      for (let i = 0; i < numRequests; i++) {
+        const type = booksChecklist[Math.Between(0, booksChecklist.length - 1)].type
+        requests.push(type)
+      }
       const type = customerTypes[Math.Between(0, customerTypes.length - 1)]
       const isFinalCustomer = i == customerCount - 1
       const customer = new Customer(this, o.x, o.y + assignedY + Math.Between(-2, 2), type, isFinalCustomer ? [] : requests, isFinalCustomer)
       this.customers.push(customer);
+      // customer.animateEntry(); // remove
       // this.add.rectangle(customer.x - 10, customer.y + 5.5, customer.width, customer.height, 0xff0000, 0.5)
     }
     this.customers[0].animateEntry()
     // this.debugBookRect = this.add.rectangle(0, 0, 100, 100, 0xff0000, 0.5)
   }
 
-  spawnBook() {
+  spawnBook(type) {
     const cumulativeAreas = []
     let areaSum = 0
     this.bookSpawnRects.forEach((rect) => {
@@ -161,8 +172,7 @@ export class Game extends Scene
     const chosenRect = this.bookSpawnRects[chosenAreaIndex]
     const bookX = chosenRect.x + Math.Between(0, chosenRect.width)
     const bookY = chosenRect.y + Math.Between(0, chosenRect.height)
-    // should be Between(0,20)
-    this.books.push(new Book(this, bookX, bookY, Math.Between(0, 2)))
+    this.books.push(new Book(this, bookX, bookY, type))
   }
 
   update ()
@@ -177,7 +187,7 @@ export class Game extends Scene
         if (!book.onGround()) {
         // this.debugBookRect.setPosition(book.x, book.y)
         // this.debugBookRect.setSize(book.displayWidth, book.displayHeight) 
-      }
+        }
         const bookRect = new Phaser.Geom.Rectangle(book.x, book.y, book.displayWidth, book.displayHeight)
         const pickupRect = new Phaser.Geom.Rectangle(c.x - 21, c.y, c.width, c.height)
         if (Phaser.Geom.Intersects.RectangleToRectangle(bookRect, pickupRect) && book.onGround() && c.requests.includes(book.type)) {
@@ -187,19 +197,12 @@ export class Game extends Scene
             if (nextCustomer) {
               nextCustomer.animateEntry()
             } else {
-              endGame()
+              return;
             }
           }
         }
       })
     })
-  }
-
-  endGame() {
-    if (this.gameOver) return
-    this.gameOver = true
-
-    
   }
 
   handleMovement() {
@@ -239,17 +242,33 @@ class Customer extends Phaser.GameObjects.Sprite {
     super(scene, x, y, tex);
     scene.add.existing(this);
     this.setFrame(0)
+    this.setDepth(DepthManager.customer())
     this.flipX = -1
     this.requests = requests
+    this.isFinalCustomer = isFinalCustomer
     this.complete = false
+    this.reachedCounter = false
  
     this.bookUiSprites = []
+    this.bubble = scene.add.graphics(0, 0)
+    const bubble = this.bubble
+    this.bubble.setDepth(DepthManager.ui());
+    this.bubble.setAlpha(0)
     if (isFinalCustomer) {
-
+      this.cake = scene.add.sprite(x, y, 'cake')
+      this.cake.setDepth(DepthManager.cake())
+      const style = { font: "16px Arial", fill: "#454545" };
+      this.text = scene.add.text(x, y, 'Happy birthday!!!', style)
+      this.text.setScale(0.5)
+      this.text.setAlpha(0)
+      this.text.setDepth(DepthManager.uiText());
+      const text = this.text
+      bubble.clear()
+      bubble.fillStyle(0xffffff, 1);
+      bubble.lineStyle(1, 0x565656, 1)
+      bubble.fillRoundedRect(0, 0, text.displayWidth + 10, text.displayHeight + 10, 2)
+      bubble.strokeRoundedRect(0, 0, text.displayWidth + 10, text.displayHeight + 10, 2)
     } else {
-      this.bubble = scene.add.graphics(0, 0)
-      this.bubble.setDepth(DepthManager.ui());
-      this.bubble.setAlpha(0)
       this.bookUiSprites = requests.map((request) => {
         const bookUiSprite = new Book(scene, 0, 0, request);
         bookUiSprite.setDepth(DepthManager.ui());
@@ -279,21 +298,19 @@ class Customer extends Phaser.GameObjects.Sprite {
       runFrameEnd = 39
       celebrateFrameStart = 56
       celebrateFrameEnd = 61
-      celebrateRepeatCount = 1
     } else if (tex == "raccoon") {
       idleFrameEnd = 7
       runFrameStart = 8
       runFrameEnd = 15
       celebrateFrameStart = 16
       celebrateFrameEnd = 19
-      celebrateRepeatCount = 1
     }
 
     this.anims.create({
       key: 'idle',
       frames: this.anims.generateFrameNumbers(tex, { start: idleFrameStart, end: idleFrameEnd }),
       frameRate: 6,
-      repeat: -1
+      repeat: -1,
     });
     this.anims.create({
       key: 'run',
@@ -310,9 +327,21 @@ class Customer extends Phaser.GameObjects.Sprite {
   }
 
   update() {
-    if (this.bookUiSprites.length == 0) return
-    const firstBookUi = this.bookUiSprites[0]
-    this.bubble.setPosition(firstBookUi.getTopLeft().x, firstBookUi.getTopLeft().y)
+    if (this.cake) {
+      if (this.reachedCounter) {
+        const anchor = this.scene.cakeAnchor
+        this.cake.setPosition(anchor.x + anchor.width /  2, anchor.y + anchor.height / 2)
+      } else {
+        this.cake.setPosition(this.x, this.y - this.cake.displayHeight / 2);
+      }
+    }
+    if (this.isFinalCustomer) {
+      this.text.setPosition(this.x - this.displayWidth / 2 - this.text.displayWidth / 2 + 2, this.y - 18)
+      this.bubble.setPosition(this.x - this.displayWidth / 2 - this.text.displayWidth / 2, this.y - 20)
+    } else if (this.bookUiSprites.length > 0) {
+      const firstBookUi = this.bookUiSprites[0]
+      this.bubble.setPosition(firstBookUi.getTopLeft().x, firstBookUi.getTopLeft().y)
+    }
   }
 
   alignBookUiPositions() {
@@ -359,10 +388,17 @@ class Customer extends Phaser.GameObjects.Sprite {
         this.play('run', true)
       },
       onComplete :() => {
+        this.reachedCounter = true
         this.play('idle', true)
-        if (this.isFinalCustomer) return
+        if (this.isFinalCustomer) {
+          this.text.setAlpha(0.8)
+          this.bubble.setAlpha(0.8)
+          // Terrible
+          this.scene.customers.forEach((customer) => { customer.play('celebrate', true).chain({ key: 'idle', delay: Math.Between(0, 500) }) })
+          return;
+        }
         this.bookUiSprites.forEach((sprite) => { sprite.setAlpha(1) })
-        this.bubble.setAlpha(1)
+        if (this.bubble) this.bubble.setAlpha(1)
       }
     })
   }

@@ -134,12 +134,12 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":152.5,
+                 "width":31.625,
                  "x":672,
                  "y":280.5
                 }, 
                 {
-                 "height":195.5,
+                 "height":29.3181818181818,
                  "id":49,
                  "name":"",
                  "rotation":0,
@@ -147,7 +147,7 @@
                  "visible":true,
                  "width":26,
                  "x":800,
-                 "y":314.5
+                 "y":480.681818181818
                 }, 
                 {
                  "height":31.5,
@@ -324,6 +324,28 @@
                  "width":28.3333333333333,
                  "x":481,
                  "y":576.666666666667
+                }, 
+                {
+                 "height":23.875,
+                 "id":68,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":121.625,
+                 "x":704.25,
+                 "y":280.25
+                }, 
+                {
+                 "height":198.909090909091,
+                 "id":69,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":19.4545454545455,
+                 "x":806.363636363636,
+                 "y":280.909090909091
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -644,9 +666,31 @@
          "visible":true,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":14,
+         "name":"cake_anchor",
+         "objects":[
+                {
+                 "height":8.72727272727275,
+                 "id":72,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":9.45454545454538,
+                 "x":807.454545454545,
+                 "y":378
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":14,
- "nextobjectid":68,
+ "nextlayerid":15,
+ "nextobjectid":73,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.0",
